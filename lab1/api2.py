@@ -7,34 +7,35 @@ class API2Client:
     def __init__(self):
         config = load_config()
         self.api_key = config['API2_KEY']
-        self.auth_token = config['AUTH_TOKEN']
-        self.base_url = "https://moroccan-darija-sentiment-analysis.p.rapidapi.com"
+        # Убрали auth_token
+        self.base_url = "https://text-analysis-classification-summarisation.p.rapidapi.com"
         self.headers = {
             "X-RapidAPI-Key": self.api_key,
-            "X-RapidAPI-Host": "moroccan-darija-sentiment-analysis.p.rapidapi.com",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": self.auth_token
+            "X-RapidAPI-Host": "text-analysis-classification-summarisation.p.rapidapi.com",
+            "Content-Type": "application/json"
         }
 
     def analyze_sentiment(self, text: str) -> Optional[Dict]:
-        url = f"{self.base_url}/api/sentimentAnalysis"
-        payload = f"InputText={text}"
+        """
+        Отправляет текст на анализ тональности к API:
+        POST /api/v1/sentiment_analysis/
+        Возвращает результат в формате:
+        {
+            "sentiment": "Positive" | "Negative" | "Neutral",
+            "confidence": float
+        }
+        """
+        url = f"{self.base_url}/api/v1/sentiment_analysis/"
+        payload = {"sentence": text}
         
         try:
-            response = requests.post(url, data=payload, headers=self.headers)
+            response = requests.post(url, json=payload, headers=self.headers)
             response.raise_for_status()
             result = response.json()
-            
-            if 'Sentiment Analysis' in result:
-                sentiment_data = result['Sentiment Analysis']
-                return {
-                    'sentiment': sentiment_data.get('sentiment', 'unknown'),
-                    'confidence': sentiment_data.get('confidence_score', 0.0)
-                }
-            else:
-                print(f"Unknown API response structure: {result}")
-                return None
-                
+            return {
+                "sentiment": result.get("sentiment", "unknown"),
+                "confidence": result.get("confidence", 0.0)
+            }
         except requests.exceptions.RequestException as e:
             print(f"Error in API2 request: {e}")
             return None
